@@ -4,10 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Real-Time Dual-Device Notes</title>
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet"
-    />
     <style>
       /* --- Basic Styling --- */
       :root {
@@ -92,11 +88,6 @@
         height: 120px;
         font-size: 1.2rem;
         margin: 10px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
       }
       #auth-screen input {
         display: block;
@@ -193,90 +184,6 @@
         color: var(--success-color);
         font-weight: bold;
       }
-
-      /* Role switching styles */
-      .role-switcher {
-        position: relative;
-        display: inline-block;
-        margin: 10px 0;
-      }
-
-      .role-dropdown {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        background: var(--background-color);
-        border: 2px solid white;
-        border-radius: 4px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        z-index: 1000;
-        min-width: 150px;
-        display: none;
-      }
-
-      .role-dropdown.show {
-        display: block;
-      }
-
-      .role-option {
-        padding: 10px 15px;
-        cursor: pointer;
-        border-bottom: 1px solid #333;
-        transition: background-color 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .role-option:hover {
-        background-color: var(--light-gray);
-      }
-
-      .role-option:last-child {
-        border-bottom: none;
-      }
-
-      .role-option.active {
-        background-color: var(--primary-color);
-        color: white;
-      }
-
-      /* Multitasking mode styles */
-      .multitask-container {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        margin-top: 20px;
-      }
-
-      .multitask-panel {
-        border: 1px solid white;
-        border-radius: 4px;
-        padding: 10px;
-      }
-
-      .multitask-panel h4 {
-        margin: 0 0 10px 0;
-        font-size: 14px;
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-      }
-
-      .multitask-textarea {
-        width: 100%;
-        background-color: #000000;
-        color: #fafafa;
-        height: 300px;
-        box-sizing: border-box;
-        font-size: 0.9rem;
-        padding: 8px;
-        border: 1px solid white;
-        border-radius: 4px;
-        resize: vertical;
-      }
     </style>
   </head>
   <body>
@@ -296,29 +203,12 @@
         <div id="role-prompt" class="hidden">
           <h3>Multiple Devices Detected!</h3>
           <p>Choose a role for this device.</p>
-          <button id="typer-btn">
-            <span class="material-icons">edit</span> Typer
-          </button>
-          <button id="viewer-btn">
-            <span class="material-icons">visibility</span> Viewer
-          </button>
+          <button id="typer-btn">Typer ✍️</button>
+          <button id="viewer-btn">Viewer 👁️</button>
         </div>
 
         <div id="typer-mode" class="hidden">
           <h3>Typer Mode</h3>
-          <div class="role-switcher">
-            <button id="role-switch-btn">
-              <span class="material-icons">expand_more</span> Switch Role
-            </button>
-            <div id="role-dropdown" class="role-dropdown">
-              <div class="role-option" data-role="viewer">
-                <span class="material-icons">visibility</span> Switch to Viewer
-              </div>
-              <div class="role-option" data-role="multitask">
-                <span class="material-icons">sync</span> Multitask Mode
-              </div>
-            </div>
-          </div>
           <textarea
             id="note-editor"
             placeholder="Start typing... changes are saved and synced in real-time."
@@ -327,55 +217,7 @@
 
         <div id="viewer-mode" class="hidden">
           <h3>Viewer Mode (Read-only)</h3>
-          <div class="role-switcher">
-            <button id="role-switch-btn">
-              <span class="material-icons">expand_more</span> Switch Role
-            </button>
-            <div id="role-dropdown" class="role-dropdown">
-              <div class="role-option" data-role="typer">
-                <span class="material-icons">edit</span> Switch to Typer
-              </div>
-              <div class="role-option" data-role="multitask">
-                <span class="material-icons">sync</span> Multitask Mode
-              </div>
-            </div>
-          </div>
           <div id="viewer-content">Waiting for content...</div>
-        </div>
-
-        <div id="multitask-mode" class="hidden">
-          <h3>Multitask Mode</h3>
-          <div class="role-switcher">
-            <button id="role-switch-btn">
-              <span class="material-icons">expand_more</span> Switch Role
-            </button>
-            <div id="role-dropdown" class="role-dropdown">
-              <div class="role-option" data-role="typer">
-                <span class="material-icons">edit</span> Switch to Typer
-              </div>
-              <div class="role-option" data-role="viewer">
-                <span class="material-icons">visibility</span> Switch to Viewer
-              </div>
-            </div>
-          </div>
-          <div class="multitask-container">
-            <div class="multitask-panel">
-              <h4><span class="material-icons">edit</span> Editor Panel</h4>
-              <textarea
-                id="multitask-editor"
-                class="multitask-textarea"
-                placeholder="Type here... changes sync to viewer panel."
-              ></textarea>
-            </div>
-            <div class="multitask-panel">
-              <h4>
-                <span class="material-icons">visibility</span> Viewer Panel
-              </h4>
-              <div id="multitask-viewer" class="multitask-textarea">
-                Waiting for content...
-              </div>
-            </div>
-          </div>
         </div>
 
         <div id="status-bar">Connecting...</div>
@@ -421,11 +263,8 @@
       const rolePrompt = document.getElementById("role-prompt");
       const typerMode = document.getElementById("typer-mode");
       const viewerMode = document.getElementById("viewer-mode");
-      const multitaskMode = document.getElementById("multitask-mode");
       const noteEditor = document.getElementById("note-editor");
       const viewerContent = document.getElementById("viewer-content");
-      const multitaskEditor = document.getElementById("multitask-editor");
-      const multitaskViewer = document.getElementById("multitask-viewer");
       const statusBar = document.getElementById("status-bar");
 
       // =================================================================
@@ -489,7 +328,6 @@
           listenForDeviceChanges();
           listenForNoteChanges();
           startHeartbeat();
-          setupRoleSwitching(); // Initialize role switching functionality
         } else {
           // User is signed out
           await cleanup();
@@ -575,19 +413,9 @@
             if (activeDevices.length > 1 && !typer) {
               showUI("prompt"); // Multiple devices, no typer yet -> show prompt
             } else if (typer && thisDevice?.ipAddress === typer.ipAddress) {
-              // Check if this device is in multitask mode
-              if (thisDevice.role === "multitask") {
-                showUI("multitask");
-              } else {
-                showUI("typer"); // This device is the typer
-              }
+              showUI("typer"); // This device is the typer
             } else if (typer && thisDevice?.ipAddress !== typer.ipAddress) {
-              // Check if this device is in multitask mode
-              if (thisDevice.role === "multitask") {
-                showUI("multitask");
-              } else {
-                showUI("viewer"); // Another device is the typer
-              }
+              showUI("viewer"); // Another device is the typer
             } else if (activeDevices.length === 1 && thisDevice) {
               setRole("typer"); // Only one device, becomes typer automatically
             }
@@ -618,53 +446,14 @@
         .getElementById("viewer-btn")
         .addEventListener("click", () => setRole("viewer"));
 
-      // Role switching functionality
-      function setupRoleSwitching() {
-        const roleSwitchBtns = document.querySelectorAll("#role-switch-btn");
-        const roleDropdowns = document.querySelectorAll("#role-dropdown");
-        const roleOptions = document.querySelectorAll(".role-option");
-
-        // Toggle dropdown on button click
-        roleSwitchBtns.forEach((btn, index) => {
-          btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const dropdown = roleDropdowns[index];
-            dropdown.classList.toggle("show");
-          });
-        });
-
-        // Handle role option clicks
-        roleOptions.forEach((option) => {
-          option.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const newRole = option.dataset.role;
-            setRole(newRole);
-
-            // Close all dropdowns
-            roleDropdowns.forEach((dropdown) => {
-              dropdown.classList.remove("show");
-            });
-          });
-        });
-
-        // Close dropdowns when clicking outside
-        document.addEventListener("click", () => {
-          roleDropdowns.forEach((dropdown) => {
-            dropdown.classList.remove("show");
-          });
-        });
-      }
-
       function showUI(mode) {
         rolePrompt.classList.add("hidden");
         typerMode.classList.add("hidden");
         viewerMode.classList.add("hidden");
-        multitaskMode.classList.add("hidden");
 
         if (mode === "prompt") rolePrompt.classList.remove("hidden");
         else if (mode === "typer") typerMode.classList.remove("hidden");
         else if (mode === "viewer") viewerMode.classList.remove("hidden");
-        else if (mode === "multitask") multitaskMode.classList.remove("hidden");
       }
 
       function updateStatusBar(devices, typer) {
@@ -682,9 +471,9 @@
             if (isThisDevice)
               statusText += ` <span style="color: var(--primary-color);">(You)</span>`;
             if (isTyper)
-              statusText += ` <span class="typer-indicator"><span class="material-icons">edit</span> Typer</span>`;
+              statusText += ` <span class="typer-indicator">✍️ Typer</span>`;
             else if (device.role === "viewer")
-              statusText += ` <span style="color: #666;"><span class="material-icons">visibility</span> Viewer</span>`;
+              statusText += ` <span style="color: #666;">👁️ Viewer</span>`;
             statusText += `</div>`;
           });
           statusText += `</div>`;
@@ -728,27 +517,6 @@
         }, 1000);
       });
 
-      // Multitask editor: Save to Firestore after user stops typing for 1 second
-      multitaskEditor.addEventListener("input", (e) => {
-        clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(() => {
-          if (!currentUser) return;
-          const noteRef = db
-            .collection("users")
-            .doc(currentUser.uid)
-            .collection("notes")
-            .doc(NOTE_ID);
-          noteRef.set(
-            {
-              content: e.target.value,
-              updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-              updatedBy: deviceIP,
-            },
-            { merge: true }
-          ); // Use merge to avoid overwriting other fields
-        }, 1000);
-      });
-
       // Viewer/Typer: Listen for note changes from Firestore
       function listenForNoteChanges() {
         if (noteListener) noteListener(); // Unsubscribe
@@ -761,24 +529,15 @@
         noteListener = noteRef.onSnapshot(
           (doc) => {
             const content = doc.exists ? doc.data().content : "";
-            // Update all views to keep them in sync regardless of role
+            // Update both views to keep them in sync regardless of role
             if (noteEditor.value !== content) {
               noteEditor.value = content;
             }
-            if (viewerContent.textContent !== content) {
-              viewerContent.textContent = content;
-            }
-            if (multitaskEditor.value !== content) {
-              multitaskEditor.value = content;
-            }
-            if (multitaskViewer.textContent !== content) {
-              multitaskViewer.textContent = content;
-            }
+            viewerContent.textContent = content;
           },
           (error) => {
             console.error("Error listening to note changes:", error);
             viewerContent.textContent = "Error loading note.";
-            multitaskViewer.textContent = "Error loading note.";
           }
         );
       }
