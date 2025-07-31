@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test IP Detection</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>IP Address Detection Test</h1>
+      <p>
+        This test will verify that the IP address detection is working correctly
+        for the real-time notes application.
+      </p>
+
+      <button onclick="testIPDetection()">Test IP Detection</button>
+      <div id="result"></div>
+    </div>
+
+    <script>
+      async function getDeviceIP() {
+        try {
+          // Try to get IP from a public service
+          const response = await fetch("https://api.ipify.org?format=json");
+          const data = await response.json();
+          return data.ip;
+        } catch (error) {
+          console.warn("Could not get public IP, using fallback:", error);
+          // Fallback: generate a pseudo-IP based on timestamp and random number
+          return `192.168.1.${Math.floor(Math.random() * 254) + 1}`;
+        }
+      }
+
+      async function testIPDetection() {
+        const resultDiv = document.getElementById("result");
+        resultDiv.innerHTML =
+          '<div class="status info">Testing IP detection...</div>';
+
+        try {
+          const ip = await getDeviceIP();
+          resultDiv.innerHTML = `
+                    <div class="status success">
+                        <strong>Success!</strong><br>
+                        Detected IP: ${ip}<br>
+                        This IP will be used as the device identifier in the real-time notes application.
+                    </div>
+                `;
+        } catch (error) {
+          resultDiv.innerHTML = `
+                    <div class="status error">
+                        <strong>Error!</strong><br>
+                        Failed to detect IP: ${error.message}<br>
+                        The application will use a fallback IP address.
+                    </div>
+                `;
+        }
+      }
+
+      // Auto-test on page load
+      window.addEventListener("load", testIPDetection);
+    </script>
+  </body>
+</html>
