@@ -277,6 +277,96 @@
         border-radius: 4px;
         resize: vertical;
       }
+
+      /* Document history styles */
+      .history-container {
+        margin-top: 20px;
+        border: 1px solid white;
+        border-radius: 4px;
+        padding: 15px;
+      }
+
+      .history-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+      }
+
+      .history-list {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #333;
+        border-radius: 4px;
+        background: #111;
+      }
+
+      .history-item {
+        padding: 10px;
+        border-bottom: 1px solid #333;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .history-item:hover {
+        background-color: var(--light-gray);
+      }
+
+      .history-item:last-child {
+        border-bottom: none;
+      }
+
+      .history-item.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .history-info {
+        flex: 1;
+      }
+
+      .history-title {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .history-meta {
+        font-size: 0.8rem;
+        color: #aaa;
+      }
+
+      .history-actions {
+        display: flex;
+        gap: 5px;
+      }
+
+      .history-btn {
+        padding: 3px 8px;
+        font-size: 0.7rem;
+        margin: 0;
+      }
+
+      .history-preview {
+        margin-top: 15px;
+        padding: 10px;
+        background: #111;
+        border: 1px solid #333;
+        border-radius: 4px;
+        max-height: 200px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        font-size: 0.9rem;
+      }
+
+      .no-history {
+        text-align: center;
+        color: #666;
+        padding: 20px;
+        font-style: italic;
+      }
     </style>
   </head>
   <body>
@@ -379,6 +469,30 @@
         </div>
 
         <div id="status-bar">Connecting...</div>
+
+        <!-- Document History Section -->
+        <div class="history-container">
+          <div class="history-header">
+            <h3>
+              <span class="material-icons">history</span> Document History
+            </h3>
+            <button id="refresh-history-btn" class="history-btn">
+              <span class="material-icons">refresh</span> Refresh
+            </button>
+          </div>
+          <div id="history-list" class="history-list">
+            <div class="no-history">Loading document history...</div>
+          </div>
+          <div id="history-preview" class="history-preview hidden">
+            <div class="history-header">
+              <h4>Document Preview</h4>
+              <button id="restore-doc-btn" class="history-btn">
+                <span class="material-icons">restore</span> Restore
+              </button>
+            </div>
+            <div id="preview-content"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -413,6 +527,8 @@
       let noteListener = null;
       let deviceIP = null;
       let heartbeatInterval = null;
+      let documentHistory = [];
+      let selectedHistoryDoc = null;
       const NOTE_ID = "shared_note"; // Using one shared note for this example
 
       // --- UI Elements ---
@@ -427,6 +543,9 @@
       const multitaskEditor = document.getElementById("multitask-editor");
       const multitaskViewer = document.getElementById("multitask-viewer");
       const statusBar = document.getElementById("status-bar");
+      const historyList = document.getElementById("history-list");
+      const historyPreview = document.getElementById("history-preview");
+      const previewContent = document.getElementById("preview-content");
 
       // =================================================================
       // 🌐 IP ADDRESS DETECTION
@@ -490,6 +609,8 @@
           listenForNoteChanges();
           startHeartbeat();
           setupRoleSwitching(); // Initialize role switching functionality
+          loadDocumentHistory(); // Load document history
+          startHistoryAutoSave(); // Start auto-save to history
         } else {
           // User is signed out
           await cleanup();
@@ -791,6 +912,9 @@
           heartbeatInterval = null;
         }
 
+        // Stop history auto-save
+        stopHistoryAutoSave();
+
         // Unsubscribe from listeners
         if (activeDevicesListener) activeDevicesListener();
         if (noteListener) noteListener();
@@ -829,6 +953,217 @@
           if (currentUser && !heartbeatInterval) {
             startHeartbeat();
           }
+        }
+      });
+
+      // =================================================================
+      // 📚 DOCUMENT HISTORY MANAGEMENT
+      // =================================================================
+
+      // Load document history from Firestore
+      async function loadDocumentHistory() {
+        if (!currentUser) return;
+
+        try {
+          const historyRef = db
+            .collection("users")
+            .doc(currentUser.uid)
+            .collection("notes")
+            .doc(NOTE_ID)
+            .collection("history")
+            .orderBy("timestamp", "desc")
+            .limit(20);
+
+          const snapshot = await historyRef.get();
+          documentHistory = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+
+          renderDocumentHistory();
+        } catch (error) {
+          console.error("Error loading document history:", error);
+          historyList.innerHTML =
+            '<div class="no-history">Error loading history</div>';
+        }
+      }
+
+      // Render document history list
+      function renderDocumentHistory() {
+        if (documentHistory.length === 0) {
+          historyList.innerHTML =
+            '<div class="no-history">No document history found</div>';
+          return;
+        }
+
+        historyList.innerHTML = documentHistory
+          .map((doc, index) => {
+            const date =
+              doc.timestamp?.toDate?.() ||
+              new Date(doc.timestamp || Date.now());
+            const formattedDate = date.toLocaleString();
+            const preview = doc.content
+              ? doc.content.substring(0, 100) +
+                (doc.content.length > 100 ? "..." : "")
+              : "No content";
+
+            return `
+             <div class="history-item" data-index="${index}">
+               <div class="history-info">
+                 <div class="history-title">Version ${
+                   documentHistory.length - index
+                 }</div>
+                 <div class="history-meta">
+                   <span class="material-icons" style="font-size: 12px;">schedule</span>
+                   ${formattedDate}
+                   ${doc.updatedBy ? ` • Updated by ${doc.updatedBy}` : ""}
+                 </div>
+                 <div style="font-size: 0.8rem; color: #888; margin-top: 5px;">
+                   ${preview}
+                 </div>
+               </div>
+               <div class="history-actions">
+                 <button class="history-btn" onclick="previewDocument(${index})">
+                   <span class="material-icons">visibility</span> View
+                 </button>
+                 <button class="history-btn" onclick="restoreDocument(${index})">
+                   <span class="material-icons">restore</span> Restore
+                 </button>
+               </div>
+             </div>
+           `;
+          })
+          .join("");
+      }
+
+      // Preview a document from history
+      function previewDocument(index) {
+        const doc = documentHistory[index];
+        if (!doc) return;
+
+        selectedHistoryDoc = doc;
+        previewContent.textContent = doc.content || "No content";
+        historyPreview.classList.remove("hidden");
+
+        // Update active state
+        document.querySelectorAll(".history-item").forEach((item) => {
+          item.classList.remove("active");
+        });
+        document
+          .querySelector(`[data-index="${index}"]`)
+          .classList.add("active");
+      }
+
+      // Restore a document from history
+      async function restoreDocument(index) {
+        const doc = documentHistory[index];
+        if (!doc || !currentUser) return;
+
+        if (
+          confirm(
+            "Are you sure you want to restore this version? This will replace the current content."
+          )
+        ) {
+          try {
+            // Update current note with restored content
+            const noteRef = db
+              .collection("users")
+              .doc(currentUser.uid)
+              .collection("notes")
+              .doc(NOTE_ID);
+
+            await noteRef.set({
+              content: doc.content,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              updatedBy: deviceIP,
+              restoredFrom: doc.id,
+            });
+
+            // Add to history
+            await noteRef.collection("history").add({
+              content: doc.content,
+              timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+              updatedBy: deviceIP,
+              action: "restored",
+            });
+
+            alert("Document restored successfully!");
+            loadDocumentHistory(); // Refresh history
+            historyPreview.classList.add("hidden");
+          } catch (error) {
+            console.error("Error restoring document:", error);
+            alert("Error restoring document");
+          }
+        }
+      }
+
+      // Save current document to history
+      async function saveToHistory(content) {
+        if (!currentUser || !content) return;
+
+        try {
+          const historyRef = db
+            .collection("users")
+            .doc(currentUser.uid)
+            .collection("notes")
+            .doc(NOTE_ID)
+            .collection("history");
+
+          await historyRef.add({
+            content: content,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedBy: deviceIP,
+          });
+        } catch (error) {
+          console.error("Error saving to history:", error);
+        }
+      }
+
+      // Event listeners for history
+      document
+        .getElementById("refresh-history-btn")
+        .addEventListener("click", loadDocumentHistory);
+      document
+        .getElementById("restore-doc-btn")
+        .addEventListener("click", () => {
+          if (selectedHistoryDoc) {
+            const index = documentHistory.findIndex(
+              (doc) => doc.id === selectedHistoryDoc.id
+            );
+            if (index !== -1) {
+              restoreDocument(index);
+            }
+          }
+        });
+
+      // Auto-save to history every 5 minutes
+      let historySaveInterval = null;
+
+      function startHistoryAutoSave() {
+        historySaveInterval = setInterval(() => {
+          const currentContent =
+            noteEditor.value || multitaskEditor.value || "";
+          if (currentContent.trim()) {
+            saveToHistory(currentContent);
+          }
+        }, 300000); // 5 minutes
+      }
+
+      function stopHistoryAutoSave() {
+        if (historySaveInterval) {
+          clearInterval(historySaveInterval);
+          historySaveInterval = null;
+        }
+      }
+
+      // Start auto-save when user logs in
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          // ... existing code ...
+          startHistoryAutoSave();
+        } else {
+          // ... existing code ...
+          stopHistoryAutoSave();
         }
       });
     </script>
